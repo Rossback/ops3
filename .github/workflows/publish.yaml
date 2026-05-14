@@ -46,6 +46,7 @@ jobs:
         run: |
           docker run -d --name test-mc \
             -e EULA=TRUE \
+            -e VERSION=1.21.1
             -p 25565:25565 \
             itzg/minecraft-server:java21
           sleep 30
