@@ -5,7 +5,8 @@
   vars:
     container_name: minecraft
     world_dir: /data
-    ecr_repo: "<ecr repo url>"
+    ecr_repo: "{{ ecr_url }}"
+    tag_version: "v1.0.0"
     aws_region: "us-east-1"
 
   tasks:
@@ -38,26 +39,30 @@
 
     - name: Restore world from S3
       shell: |
-        aws s3 sync s3://<YOUR_S3_BUCKET_NAME> {{ world_dir }}
+        aws s3 sync s3://{{ s3_bucket }} {{ world_dir }}
       ignore_errors: yes
 
     - name: Stop existing container if running
       shell: docker rm -f {{ container_name }}
       ignore_errors: yes
 
-    - name: Pull latest Minecraft image from ECR
-      shell: docker pull {{ ecr_repo }}
+    - name: Pull Minecraft image from ECR
+      shell: docker pull {{ ecr_repo }}:{{ tag_version }}
 
-    - name: Run Minecraft server container
-      shell: |
-        docker run -d \
-          --name {{ container_name }} \
-          -p 25565:25565 \
-          -v {{ world_dir }}:/data \
-          -e EULA=TRUE \
-          -e VERSION=1.21.1 \
-          -e MOTD="Sam Rossback rossbacs" \
-          {{ ecr_repo }}
+    - name: Run Minecraft container
+      community.docker.docker_container:
+        name: minecraft
+        image: "{{ ecr_repo }}:{{ tag_version }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "25565:25565"
+        volumes:
+          - "{{ world_dir }}:/data"
+        env:
+          EULA: "TRUE"
+          VERSION: "1.21.1"
+          MOTD: "Sam Rossback rossbacs"
 
     - name: Wait for Minecraft server to initialize
       pause:

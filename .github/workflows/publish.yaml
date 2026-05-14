@@ -1,0 +1,53 @@
+name: Publish MC Image to ECR
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: cs312-ops3-minecraft
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ screts.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Pull upstream MC image
+        run: docker pull itzg/minecraft-server:java21
+
+      - name: Tag image for ECR
+        run: |
+          docker tag itzg/minecraft-server:java21 \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}
+
+      - name: Push image to ECR
+        run: |
+          docker run -d --name test-mc \
+            -e EULA=TRUE \
+            -p 25565:25565 \
+            itzg/minecraft-server:java21
+          sleep 30
+          docker logs test-mc | tail -n 50
+          docker rm -f test-mc

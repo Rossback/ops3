@@ -1,0 +1,19 @@
+output "managed_node_public_ip" {
+  description = "Public IP of the managed node: WordPress will be accessible here"
+  value       = aws_instance.managed.public_ip
+}
+
+output "managed_node_private_ip" {
+  description = "Private IP of the managed node: use this in the Ansible inventory"
+  value       = aws_instance.managed.private_ip
+}
+
+output "ecr_repository_url" {
+  description = "ECR repository URL: use this in the GitHub Actions workflow"
+  value       = aws_ecr_repository.minecraft.repository_url
+}
+
+output "vpc_id" {
+  description = "ID of the provisioned VPC"
+  value       = aws_vpc.cs312.id
+}

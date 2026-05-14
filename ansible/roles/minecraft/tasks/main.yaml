@@ -1,2 +1,0 @@
-- name: Test connectivity
-  ping:
