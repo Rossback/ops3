@@ -44,11 +44,17 @@ jobs:
 
       - name: Push image to ECR
         run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}
+
+      - name: Smoke test
+        run: |
           docker run -d --name test-mc \
             -e EULA=TRUE \
             -e VERSION=1.21.1 \
+            -e MOTD="Sam Rossback testing" \
             -p 25565:25565 \
             itzg/minecraft-server:java21
+
           sleep 30
           docker logs test-mc | tail -n 50
           docker rm -f test-mc
