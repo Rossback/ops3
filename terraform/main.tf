@@ -118,9 +118,18 @@ resource "aws_ecr_repository" "minecraft" {
   }
 }
 
-#S3 Bucket for Minecraft world data
+# S3 Bucket for Minecraft world data
 resource "aws_s3_bucket" "world_backups" {
-  bucket = var.s3_backup_bucket
+  bucket = "cs312-minecraft-world-backups"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# S3 backups expire after 7 days
+resource "aws_s3_bucket_lifecycle_configuration" "world_backups_lifecycle" {
+  bucket = aws_s3_bucket.world_backups.id
 
   rule {
     id = "expire-old-backups"
@@ -131,10 +140,6 @@ resource "aws_s3_bucket" "world_backups" {
     filter {
       prefix = ""
     }
-  }
-
-  lifecycle {
-    prevent_destroy = true
   }
 }
 
