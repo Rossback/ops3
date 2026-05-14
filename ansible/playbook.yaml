@@ -5,7 +5,7 @@
   vars:
     container_name: minecraft
     world_dir: /data
-    ecr_repo: "<YOUR_ECR_REPO_URL>"
+    ecr_repo: "<ecr repo url>"
     aws_region: "us-east-1"
 
   tasks:
