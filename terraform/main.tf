@@ -121,6 +121,21 @@ resource "aws_ecr_repository" "minecraft" {
 #S3 Bucket for Minecraft world data
 resource "aws_s3_bucket" "world_backups" {
   bucket = var.s3_backup_bucket
+
+  rule {
+    id = "expire-old-backups"
+    status = "Enabled"
+    expiration {
+      days = 7
+    }
+    filter {
+      prefix = ""
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Inventory info for ansible
