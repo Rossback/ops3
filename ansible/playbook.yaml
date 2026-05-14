@@ -1,0 +1,62 @@
+- name: Configure Minecraft Server
+  hosts: minecraft
+  become: true
+
+  vars:
+    container_name: minecraft
+    world_dir: /data
+    ecr_repo: "<YOUR_ECR_REPO_URL>"
+    aws_region: "us-east-1"
+
+  tasks:
+    - name: Install Docker and AWS CLI
+      apt:
+        name:
+          - docker.io
+          - awscli
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Create Minecraft world directory
+      file:
+        path: "{{ world_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Authenticate Docker to ECR
+      shell: |
+        aws ecr get-login-password --region {{ aws_region }} \
+        | docker login --username AWS --password-stdin {{ ecr_repo }}
+      args:
+        executable: /bin/bash
+
+    - name: Restore world from S3
+      shell: |
+        aws s3 sync s3://<YOUR_S3_BUCKET_NAME> {{ world_dir }}
+      ignore_errors: yes
+
+    - name: Stop existing container if running
+      shell: docker rm -f {{ container_name }}
+      ignore_errors: yes
+
+    - name: Pull latest Minecraft image from ECR
+      shell: docker pull {{ ecr_repo }}
+
+    - name: Run Minecraft server container
+      shell: |
+        docker run -d \
+          --name {{ container_name }} \
+          -p 25565:25565 \
+          -v {{ world_dir }}:/data \
+          -e EULA=TRUE \
+          {{ ecr_repo }}
+
+    - name: Wait for Minecraft server to initialize
+      pause:
+        seconds: 60
