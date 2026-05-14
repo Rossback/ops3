@@ -53,7 +53,7 @@ jobs:
             -e VERSION=1.21.1 \
             -e MOTD="Sam Rossback testing" \
             -p 25565:25565 \
-            itzg/minecraft-server:java21
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}
 
           sleep 30
           docker logs test-mc | tail -n 50
