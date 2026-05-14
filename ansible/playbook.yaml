@@ -55,6 +55,8 @@
           -p 25565:25565 \
           -v {{ world_dir }}:/data \
           -e EULA=TRUE \
+          -e VERSION=1.21.1 \
+          -e MOTD="Sam Rossback rossbacs" \
           {{ ecr_repo }}
 
     - name: Wait for Minecraft server to initialize
